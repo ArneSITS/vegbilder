@@ -47,31 +47,37 @@ import time
 
 from PIL import Image # Må installeres, pakken heter PILLOW  
 from PIL.ExifTags import TAGS, GPSTAGS
-import requests # må installeres, rett fram
-import xmltodict # Må installeres, rett fram 
+import xmltodict # Må installeres, rett fram
 
 # import ipdb
 
-def writeEXIFtoFile(imageFileName):
+def writeEXIFtoFile(imageFileName, pilImage=None, logger=None):
     """
-    Leser EXIF og skriver JSON-fil med metadata. Tilpasset firmaet "Signatur" sin kode
-    
-    Denne rutinen må kjøres FØR bildet er sladdet, fordi relevant EXIF-informasjon da slettes. 
-    """ 
-    
-    try: 
-        metadata = lesexif( imageFileName) 
-    except (AttributeError, TypeError, UnicodeDecodeError, OSError) as myErr:
-        raise OSError('lesexif routine failed for '+ imageFileName + ' : ' + str( myErr) ) 
-    else: 
-    
-        metadata['bildeuiid'] = str( uuid.uuid4() )
-        (basename, ext) = os.path.splitext( imageFileName) 
-        jsonFileName = basename + '.json'
-        
-        with open( jsonFileName, 'w') as fw: 
-            json.dump( metadata, fw, indent=4, ensure_ascii=False) 
+    Leser EXIF og skriver JSON-fil med metadata. Tilpasset firmaet "Signatur" sitt program 'sladd.pyc'.
+    Denne rutinen må kjøres FØR bildet er sladdet, fordi relevant EXIF-informasjon da slettes.
+    Hvis funksjonen fullfører uten feil returneres filnavnet til metadatafila ellers, None.
+    Hvis 'logger' ikke er None logges feilmeldingen.
 
+    Det er lagt inn en parameter 'pilImage' denne kan brukes til optimalisering når kallende funksjon (sladd) allerede
+    har lest og kan legge ved det aktuelle PIL.Image objektet.
+    """
+    from pathlib import Path
+    imageFileName = Path(imageFileName)
+    try:
+        metadata = lesexif( imageFileName) 
+    except (AttributeError, TypeError, UnicodeDecodeError) as myErr:
+        msg = '%s:\n\tlesexif routine failed for %s' % (myErr,imageFileName)
+        print(msg)
+        if logger is not None:
+            logger.error(msg)
+        return
+
+    metadata['bildeuiid'] = str( uuid.uuid4() )
+    jsonFileName = imageFileName.with_suffix('.json')
+    with jsonFileName.open('w') as fw:
+        json.dump( metadata, fw, indent=4, ensure_ascii=False)
+
+    return jsonFileName
 
 def indekserbildemappe( datadir, overskrivGammalJson=False ): 
     """
