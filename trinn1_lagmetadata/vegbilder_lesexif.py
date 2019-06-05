@@ -51,7 +51,7 @@ import xmltodict # Må installeres, rett fram
 
 # import ipdb
 
-def writeEXIFtoFile(imageFileName, pilImage=None, logger=None):
+def writeEXIFtoFile(imageFileName,pilImage=None,callersLogger=None):
     """
     Leser EXIF og skriver JSON-fil med metadata. Tilpasset firmaet "Signatur" sitt program 'sladd.pyc'.
     Denne rutinen må kjøres FØR bildet er sladdet, fordi relevant EXIF-informasjon da slettes.
@@ -68,8 +68,8 @@ def writeEXIFtoFile(imageFileName, pilImage=None, logger=None):
     except (AttributeError, TypeError, UnicodeDecodeError) as myErr:
         msg = '%s:\n\tlesexif routine failed for %s' % (myErr,imageFileName)
         print(msg)
-        if logger is not None:
-            logger.error(msg)
+        if callersLogger is not None:
+            callersLogger.error(msg)
         return
 
     metadata['bildeuiid'] = str( uuid.uuid4() )
